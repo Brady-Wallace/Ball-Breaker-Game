@@ -1,60 +1,69 @@
-using System.Collections;
+
 using UnityEngine;
 using UnityEngine.InputSystem;
 
 public class DragBehaviour : MonoBehaviour
 {
-    [SerializeField] 
-    private InputAction downEvent;
+    private PlayerInput playerInput;
 
-    [SerializeField] 
-    private float DragSpeed = .1f;
+    [SerializeField] private GameObject player;
+     
+    private InputAction downEvent;
+    private InputAction positionEvent;
+
+    
 
     private Camera mainCamera;
-    private Vector3 velocity = Vector3.zero;
+    private Vector3 initialTouchPosition;
+    private Vector3 initialObjectPosition;
+    private bool isDragging = false;
+    
 
     private void Awake()
     {
+        playerInput = GetComponent<PlayerInput>();
+        downEvent = playerInput.actions["TouchPress"];
+        positionEvent = playerInput.actions["TouchPosition"];
         mainCamera = Camera.main;
     }
 
     private void OnEnable()
     {
-        downEvent.Enable();
-        downEvent.performed += downPressed;
-        
+        downEvent.started += OnTouchStart;
+        downEvent.canceled += OnTouchEnd;
+
     }
 
     private void OnDisable()
     {
-        downEvent.performed -= downPressed;
-        downEvent.Disable();
+        downEvent.started -= OnTouchStart;
+        downEvent.canceled -= OnTouchEnd;
+    }
+    
+
+    private void OnTouchStart(InputAction.CallbackContext context)
+    {
+        if (isDragging) return;
+
+        initialTouchPosition = positionEvent.ReadValue<Vector2>();
+        initialObjectPosition = player.transform.position;
+        isDragging = true;
     }
 
-    private void downPressed(InputAction.CallbackContext context)
+    private void OnTouchEnd(InputAction.CallbackContext context)
     {
-        Ray ray = mainCamera.ScreenPointToRay(Mouse.current.position.ReadValue());
-        RaycastHit hit;
-        if (Physics.Raycast(ray, out hit))
-        {
-            if (hit.collider != null)
-            {
-                StartCoroutine(DragUpdate(hit.collider.gameObject));
-            }
-        }
+        isDragging = false;
     }
 
-    private IEnumerator DragUpdate(GameObject pressedObject)
+    private void Update()
     {
-        float initialDistance = Vector3.Distance(pressedObject.transform.position, mainCamera.transform.position);
-        while (downEvent.ReadValue<float>() != 0)
+        if (isDragging)
         {
-            Ray ray = mainCamera.ScreenPointToRay(Mouse.current.position.ReadValue());
-            pressedObject.transform.position = Vector3.SmoothDamp(pressedObject.transform.position,
-                ray.GetPoint(initialDistance), ref velocity, DragSpeed);
-            yield return null;
+            Vector3 touchPosition = mainCamera.ScreenToWorldPoint(positionEvent.ReadValue<Vector2>());
+            Vector3 touchDelta = touchPosition - mainCamera.ScreenToWorldPoint(initialTouchPosition);
+            player.transform.position = new Vector3(initialObjectPosition.x + touchDelta.x, player.transform.position.y,
+                player.transform.position.z);
         }
-
     }
 }
 
