@@ -7,7 +7,7 @@ public class SpawnObjectsBehaviour : MonoBehaviour
 
     [SerializeField] private GameObject[] paddlePowerUps;
 
-    [SerializeField] private GameObject[] ballPowerUps;
+    
     
     // Start is called before the first frame update
     void Start()
@@ -38,18 +38,6 @@ public class SpawnObjectsBehaviour : MonoBehaviour
                             }
 
 
-                        }
-                    }
-                    else
-                    {
-                        for (int k = 0; k < ballPowerUps.Length; k++)
-                        {
-                            if (!paddlePowerUps[k].activeSelf)
-                            {
-                                paddlePowerUps[k].SetActive(true);
-                                paddlePowerUps[k].transform.position = bricks[i].transform.position;
-                                break;
-                            }
                         }
                     }
                 }
